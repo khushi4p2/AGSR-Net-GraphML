@@ -23,7 +23,10 @@ class GSRLayer(nn.Module):
             lr = A
             lr_dim = lr.shape[0]
             f = X
-            eig_val_lr, U_lr = torch.symeig(lr, eigenvectors=True, upper=True)
+
+            ############# fixed code - changed symeig function
+            eig_val_lr, U_lr = torch.linalg.eigh(lr, UPLO='U')
+            ###############################
 
             # U_lr = torch.abs(U_lr)
             eye_mat = torch.eye(lr_dim).type(torch.FloatTensor)
