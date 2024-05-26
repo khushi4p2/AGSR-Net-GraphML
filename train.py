@@ -30,8 +30,8 @@ def train(model, subjects_adj, subjects_labels, args):
                 lr = torch.from_numpy(lr).type(torch.FloatTensor)
                 padded_hr = torch.from_numpy(hr).type(torch.FloatTensor)
 
-                eig_val_hr, U_hr = torch.symeig(
-                    padded_hr, eigenvectors=True, upper=True)
+                eig_val_hr, U_hr = torch.linalg.eigh(
+                    padded_hr, UPLO='U')
 
                 model_outputs, net_outs, start_gcn_outs, layer_outs = model(
                     lr, args.lr_dim, args.hr_dim)
