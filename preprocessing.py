@@ -3,7 +3,7 @@ import numpy as np
 import os
 import scipy.io
 
-path = 'drive/My Drive/BRAIN_DATASET'
+path = 'drive/BRAIN_DATASET'
 roi_str = 'ROI_FC.mat'
 
 
