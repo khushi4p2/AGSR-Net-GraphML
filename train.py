@@ -18,7 +18,7 @@ def train(model, subjects_adj, subjects_labels, args):
     #####################################################
 
     bce_loss = nn.BCELoss()
-    netD = Discriminator(args)
+    # netD = Discriminator(args)
     print(netD)
     optimizerG = optim.Adam(model.parameters(), lr=args.lr)
     optimizerD = optim.Adam(netD.parameters(), lr=args.lr)
