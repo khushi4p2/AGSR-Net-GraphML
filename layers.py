@@ -56,7 +56,7 @@ class GSRLayer(nn.Module):
                 print(T_k[i].shape)
                 print(f.shape)
                 ##########################
-                f_d += torch.matmul(a, torch.matmul(T_k[i], f.t()))
+                f_d += torch.matmul(a.t(), torch.matmul(T_k[i], f.t()))
             f_d = torch.abs(f_d)
             f_d = f_d.fill_diagonal_(1)
             adj = f_d
