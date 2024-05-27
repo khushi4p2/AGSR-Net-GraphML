@@ -20,6 +20,9 @@ class GSRLayer(nn.Module):
             weight_variable_glorot(hr_dim, 2*hr_dim)).type(torch.FloatTensor)
         self.weights = torch.nn.Parameter(
             data=self.weights, requires_grad=True)
+        ####################################### debug code
+        print("dim of hr_dim:", hr_dim)
+        ##################################################
         #######################################
         # self.weights = torch.from_numpy(
         #     weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
@@ -36,7 +39,6 @@ class GSRLayer(nn.Module):
 
             ############################## debug code 
             print("dim of lr_dim:", lr_dim)
-            print("dim of hr_dim:", hr_dim)
             ##########################################
 
             # Compute the Chebyshev polynomial approximation
