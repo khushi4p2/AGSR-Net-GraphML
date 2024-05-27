@@ -52,8 +52,8 @@ class GraphUnet(nn.Module):
         # self.bottom_gat = GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True)
         # self.end_gat = GraphAttentionLayer(2*dim, out_dim, dropout=0.6, alpha=0.2, concat=False)
         self.start_gat = GraphAttentionLayer(in_dim + 1, dim, dropout=0.6, alpha=0.2, concat=True)
-        self.bottom_gat = GraphAttentionLayer(dim + 1, dim, dropout=0.6, alpha=0.2, concat=True)
-        self.end_gat = GraphAttentionLayer(2*dim + 1, out_dim, dropout=0.6, alpha=0.2, concat=False)
+        self.bottom_gat = GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True)
+        self.end_gat = GraphAttentionLayer(2*dim, out_dim, dropout=0.6, alpha=0.2, concat=False)
         ########################### edge centrality meaures ###############
 
         self.down_gats = []
@@ -70,8 +70,8 @@ class GraphUnet(nn.Module):
             # self.pools.append(GraphAttentionPool(ks[i], dim))
             # self.unpools.append(GraphAttentionUnpool())
 
-            self.down_gats.append(GraphAttentionLayer(dim + 1, dim, dropout=0.6, alpha=0.2, concat=True))
-            self.up_gats.append(GraphAttentionLayer(dim + 1, dim, dropout=0.6, alpha=0.2, concat=True))
+            self.down_gats.append(GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True))
+            self.up_gats.append(GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True))
             self.pools.append(GraphAttentionPool(ks[i], dim))
             self.unpools.append(GraphAttentionUnpool())
             ######################################################################
@@ -103,20 +103,28 @@ class GraphUnet(nn.Module):
         org_X = X
         for i in range(self.l_n):
             ################ edge cent.
-            centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
-            X_with_centrality = torch.cat([X, centrality_features], dim=-1)
-            X = self.down_gats[i](X_with_centrality, A)
-            #############################
-            # X = self.down_gats[i](X, A, centrality_features)   # Pass centrality measure
+            # centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
+            # X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+            # X = self.down_gats[i](X_with_centrality, A)
+            # #############################
+            # # X = self.down_gats[i](X, A, centrality_features)   # Pass centrality measure
+            # adj_ms.append(A)
+            # down_outs.append(X)
+            # A, X, idx = self.pools[i](A, X)
+            # indices_list.append(idx)
+            X = self.down_gats[i](X, A)
             adj_ms.append(A)
             down_outs.append(X)
             A, X, idx = self.pools[i](A, X)
             indices_list.append(idx)
 
+        X = self.bottom_gat(X, A)
         ############################ edge cent.
-        centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
-        X_with_centrality = torch.cat([X, centrality_features], dim=-1)
-        X = self.bottom_gat(X_with_centrality, A)
+        
+        # centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
+        # X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+        # X = self.bottom_gat(X_with_centrality, A)
+        
         # X = self.bottom_gat(X, A, centrality_features)       # Pass centrality measure
         ########################################
         
@@ -126,20 +134,26 @@ class GraphUnet(nn.Module):
             A, idx = adj_ms[up_idx], indices_list[up_idx]
             A, X = self.unpools[i](A, X, idx)
 
+            X = self.up_gats[i](X, A)
             ################################ edge cent.
-            centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
-            X_with_centrality = torch.cat([X, centrality_features], dim=-1)
-            X = self.up_gats[i](X_with_centrality, A)
+            
+            # centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
+            # X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+            # X = self.up_gats[i](X_with_centrality, A)
+            
             # X = self.up_gats[i](X, A, centrality_features)        # Pass centrality measure
             ###########################################
             
             X = X.add(down_outs[up_idx])
         X = torch.cat([X, org_X], 1)
 
+        X = self.end_gat(X, A)
         ################################# edge cent.
-        centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
-        X_with_centrality = torch.cat([X, centrality_features], dim=-1)
-        X = self.end_gat(X_with_centrality, A)
+        
+        # centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
+        # X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+        # X = self.end_gat(X_with_centrality, A)
+        
         # X = self.end_gat(X, A, centrality_features)           # Pass centrality measure
         #############################################
         
