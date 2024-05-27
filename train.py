@@ -11,6 +11,12 @@ criterion = nn.MSELoss()
 
 def train(model, subjects_adj, subjects_labels, args):
 
+    ################# code optimization##################
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
+    netD = Discriminator(args).to(device)  # Ensure Discriminator is also on GPU
+    #####################################################
+
     bce_loss = nn.BCELoss()
     netD = Discriminator(args)
     print(netD)
@@ -26,12 +32,21 @@ def train(model, subjects_adj, subjects_labels, args):
                 optimizerD.zero_grad()
                 optimizerG.zero_grad()
 
-                hr = pad_HR_adj(hr, args.padding)
-                lr = torch.from_numpy(lr).type(torch.FloatTensor)
-                padded_hr = torch.from_numpy(hr).type(torch.FloatTensor)
+                # hr = pad_HR_adj(hr, args.padding)
+                # lr = torch.from_numpy(lr).type(torch.FloatTensor)
+                # padded_hr = torch.from_numpy(hr).type(torch.FloatTensor)
+
+                ########## code optimization
+                hr = pad_HR_adj(hr, args.padding)  # Assume this returns a NumPy array
+                lr = torch.from_numpy(lr).type(torch.FloatTensor).to(device)
+                padded_hr = torch.from_numpy(hr).type(torch.FloatTensor).to(device)
+                #############################
 
                 eig_val_hr, U_hr = torch.linalg.eigh(
                     padded_hr, UPLO='U')
+            ########### code opti. ###################
+                U_hr = U_hr.to(device)  # Transfer eigenvectors to GPU
+            ###########################################
 
                 model_outputs, net_outs, start_gcn_outs, layer_outs = model(
                     lr, args.lr_dim, args.hr_dim)
