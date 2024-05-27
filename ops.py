@@ -92,34 +92,52 @@ class GraphUnet(nn.Module):
             raise ValueError(f"Invalid centrality type: {self.centrality_type}")
         
         centrality_features = centrality.unsqueeze(-1)
-        X = torch.cat([X, centrality_features], dim=-1)
+        X_with_centrality = torch.cat([X, centrality_features], dim=-1)
         ######################################################
         
-        X = self.start_gat(X, A, centrality_features)          ######### pass centrality measure
+        # X = self.start_gat(X, A, centrality_features)          ######### pass centrality measure
+        X = self.start_gat(X_with_centrality, A)
         start_gat_outs = X
 
         org_X = X
         for i in range(self.l_n):
-            X = self.down_gats[i](X, A, centrality_features)   # Pass centrality measure
+            ################ edge cent.
+            X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+            X = self.down_gats[i](X_with_centrality, A)
+            #############################
+            # X = self.down_gats[i](X, A, centrality_features)   # Pass centrality measure
             adj_ms.append(A)
             down_outs.append(X)
             A, X, idx = self.pools[i](A, X)
             indices_list.append(idx)
-        X = self.bottom_gat(X, A, centrality_features)       # Pass centrality measure
+
+        ############################ edge cent.
+        X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+        X = self.bottom_gat(X_with_centrality, A)
+        # X = self.bottom_gat(X, A, centrality_features)       # Pass centrality measure
+        ########################################
         
         for i in range(self.l_n):
             up_idx = self.l_n - i - 1
 
             A, idx = adj_ms[up_idx], indices_list[up_idx]
             A, X = self.unpools[i](A, X, idx)
-            
-            X = self.up_gats[i](X, A, centrality_features)        # Pass centrality measure
+
+            ################################ edge cent.
+            X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+            X = self.up_gats[i](X_with_centrality, A)
+            # X = self.up_gats[i](X, A, centrality_features)        # Pass centrality measure
+            ###########################################
             
             X = X.add(down_outs[up_idx])
         X = torch.cat([X, org_X], 1)
 
-        X = self.end_gat(X, A, centrality_features)           # Pass centrality measure
-
+        ################################# edge cent.
+        X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+        X = self.end_gat(X_with_centrality, A)
+        # X = self.end_gat(X, A, centrality_features)           # Pass centrality measure
+        #############################################
+        
         return X, start_gat_outs
         
 ########################## GAT Layrs for Pooling/Unpooling ###############
@@ -140,10 +158,10 @@ class GraphAttentionLayer(nn.Module):
 
         self.leakyrelu = nn.LeakyReLU(self.alpha)
 
-    def forward(self, h, adj, centrality):
-        #################### edge cent.
-        h = torch.cat([h, centrality], dim=1) 
-        ###############################
+    def forward(self, h, adj):
+        # #################### edge cent.
+        # h = torch.cat([h, centrality], dim=1) 
+        # ###############################
         Wh = torch.mm(h, self.W)
         e = self._prepare_attentional_mechanism_input(Wh)
 
