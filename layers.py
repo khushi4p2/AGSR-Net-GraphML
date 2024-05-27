@@ -65,7 +65,7 @@ class GSRLayer(nn.Module):
             s = 2 * torch.matmul(lr, T_k_minus_one) - T_k_minus_two
             return s
 
-        for k in range(2, K):
+        for i in range(2, k):
             T_k.append(chebyshev_recurrence(T_k[-1], T_k[-2], lr))
 
         return T_k
