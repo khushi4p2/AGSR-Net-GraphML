@@ -38,18 +38,22 @@ class GraphAttentionPool(nn.Module):
         return A, new_X, idx
 
 class GraphUnet(nn.Module):
-    def __init__(self, ks, in_dim, out_dim, dim=320):
+    def __init__(self, ks, in_dim, out_dim, centrality_type = 'degree', dim=320):
         super(GraphUnet, self).__init__()
         self.ks = ks
+
+        ############################# edge centrality
+        self.centrality_type = centrality_type
+        #########################################
 
         ######################## GAT Layer for pooling/unpooling
         ########################### edge centrality meaures ###############
         # self.start_gat = GraphAttentionLayer(in_dim, dim, dropout=0.6, alpha=0.2, concat=True)
         # self.bottom_gat = GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True)
         # self.end_gat = GraphAttentionLayer(2*dim, out_dim, dropout=0.6, alpha=0.2, concat=False)
-        self.start_gat = GraphAttentionLayer(in_dim + 3, dim, dropout=0.6, alpha=0.2, concat=True)
-        self.bottom_gat = GraphAttentionLayer(dim + 3, dim, dropout=0.6, alpha=0.2, concat=True)
-        self.end_gat = GraphAttentionLayer(2*dim + 3, out_dim, dropout=0.6, alpha=0.2, concat=False)
+        self.start_gat = GraphAttentionLayer(in_dim + 1, dim, dropout=0.6, alpha=0.2, concat=True)
+        self.bottom_gat = GraphAttentionLayer(dim + 1, dim, dropout=0.6, alpha=0.2, concat=True)
+        self.end_gat = GraphAttentionLayer(2*dim + 1, out_dim, dropout=0.6, alpha=0.2, concat=False)
         ########################### edge centrality meaures ###############
 
         self.down_gats = []
@@ -66,8 +70,8 @@ class GraphUnet(nn.Module):
             # self.pools.append(GraphAttentionPool(ks[i], dim))
             # self.unpools.append(GraphAttentionUnpool())
 
-            self.down_gats.append(GraphAttentionLayer(dim + 3, dim, dropout=0.6, alpha=0.2, concat=True))
-            self.up_gats.append(GraphAttentionLayer(dim + 3, dim, dropout=0.6, alpha=0.2, concat=True))
+            self.down_gats.append(GraphAttentionLayer(dim + 1, dim, dropout=0.6, alpha=0.2, concat=True))
+            self.up_gats.append(GraphAttentionLayer(dim + 1, dim, dropout=0.6, alpha=0.2, concat=True))
             self.pools.append(GraphAttentionPool(ks[i], dim))
             self.unpools.append(GraphAttentionUnpool())
             ######################################################################
@@ -78,11 +82,16 @@ class GraphUnet(nn.Module):
         down_outs = []
 
         ################################# edge centrality 
-        degree_centrality = calc_degree_centrality(A)
-        eigenvector_centrality = calc_eigenvector_centrality(A)
-        betweenness_centrality = calc_betweenness_centrality(A)
-
-        centrality_features = torch.stack([degree_centrality, eigenvector_centrality, betweenness_centrality], dim=-1)
+        if self.centrality_type == 'degree':
+            centrality = compute_degree_centrality(A)
+        elif self.centrality_type == 'eigenvector':
+            centrality = compute_eigenvector_centrality(A)
+        elif self.centrality_type == 'betweenness':
+            centrality = compute_betweenness_centrality(A)
+        else:
+            raise ValueError(f"Invalid centrality type: {self.centrality_type}")
+        
+        centrality_features = centrality.unsqueeze(-1)
         X = torch.cat([X, centrality_features], dim=-1)
         ######################################################
         
