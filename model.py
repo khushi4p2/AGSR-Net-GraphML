@@ -23,9 +23,9 @@ class AGSRNet(nn.Module):
 
     ############# Graph Attention Layer ###############
         self.gc1 = GATLayer(
-             self.hr_dim, self.hidden_dim, 0, act=F.relu)
+             self.hr_dim, self.hidden_dim, 0)
         self.gc2 = GATLayer(
-             self.hidden_dim, self.hr_dim, 0, act=F.relu)
+             self.hidden_dim, self.hr_dim, 0)
     ############# Graph Attention Layer ###############
 
     def forward(self, lr, lr_dim, hr_dim):
