@@ -42,8 +42,12 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='AGSR-Net')
-    parser.add_argument('--epochs', type=int, default=200, metavar='no_epochs',
+    # parser.add_argument('--epochs', type=int, default=200, metavar='no_epochs',
+    #                     help='number of episode to train ')
+    #################### code opti.
+    parser.add_argument('--epochs', type=int, default=125, metavar='no_epochs',
                         help='number of episode to train ')
+    ######################################
     parser.add_argument('--lr', type=float, default=0.0001, metavar='lr',
                         help='learning rate (default: 0.0001 using Adam Optimizer)')
     parser.add_argument('--lmbda', type=float, default=0.1, metavar='L',
