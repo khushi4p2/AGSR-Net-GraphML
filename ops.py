@@ -92,6 +92,7 @@ class GraphUnet(nn.Module):
             raise ValueError(f"Invalid centrality type: {self.centrality_type}")
         
         centrality_features = centrality.unsqueeze(-1)
+        centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
         X_with_centrality = torch.cat([X, centrality_features], dim=-1)
         ######################################################
         
@@ -102,6 +103,7 @@ class GraphUnet(nn.Module):
         org_X = X
         for i in range(self.l_n):
             ################ edge cent.
+            centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
             X_with_centrality = torch.cat([X, centrality_features], dim=-1)
             X = self.down_gats[i](X_with_centrality, A)
             #############################
@@ -112,6 +114,7 @@ class GraphUnet(nn.Module):
             indices_list.append(idx)
 
         ############################ edge cent.
+        centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
         X_with_centrality = torch.cat([X, centrality_features], dim=-1)
         X = self.bottom_gat(X_with_centrality, A)
         # X = self.bottom_gat(X, A, centrality_features)       # Pass centrality measure
@@ -124,6 +127,7 @@ class GraphUnet(nn.Module):
             A, X = self.unpools[i](A, X, idx)
 
             ################################ edge cent.
+            centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
             X_with_centrality = torch.cat([X, centrality_features], dim=-1)
             X = self.up_gats[i](X_with_centrality, A)
             # X = self.up_gats[i](X, A, centrality_features)        # Pass centrality measure
@@ -133,6 +137,7 @@ class GraphUnet(nn.Module):
         X = torch.cat([X, org_X], 1)
 
         ################################# edge cent.
+        centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
         X_with_centrality = torch.cat([X, centrality_features], dim=-1)
         X = self.end_gat(X_with_centrality, A)
         # X = self.end_gat(X, A, centrality_features)           # Pass centrality measure
