@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from preprocessing import degree_centrality, eigenvector_centrality, betweenness_centrality
+from preprocessing import calc_degree_centrality, calc_eigenvector_centrality, calc_betweenness_centrality
 
 
 ################## Attention Unpooling and Pooling ##################
@@ -78,9 +78,9 @@ class GraphUnet(nn.Module):
         down_outs = []
 
         ################################# edge centrality 
-        degree_centrality = degree_centrality(A)
-        eigenvector_centrality = eigenvector_centrality(A)
-        betweenness_centrality = betweenness_centrality(A)
+        degree_centrality = calc_degree_centrality(A)
+        eigenvector_centrality = calc_eigenvector_centrality(A)
+        betweenness_centrality = calc_betweenness_centrality(A)
 
         centrality_features = torch.stack([degree_centrality, eigenvector_centrality, betweenness_centrality], dim=-1)
         X = torch.cat([X, centrality_features], dim=-1)
