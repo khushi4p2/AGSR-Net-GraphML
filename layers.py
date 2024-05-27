@@ -35,8 +35,8 @@ class GSRLayer(nn.Module):
             f = X
 
             ############################## debug code 
-            print("Shape of lr_dim:", lr_dim.shape)
-            print("Shape of hr_dim:", hr_dim.shape)
+            print("dim of lr_dim:", lr_dim)
+            print("dim of hr_dim:", hr_dim)
             ##########################################
 
             # Compute the Chebyshev polynomial approximation
