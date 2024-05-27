@@ -9,13 +9,23 @@ from preprocessing import normalize_adj_torch
 
 class GSRLayer(nn.Module):
 
-    def __init__(self, hr_dim):
+    ################## Chebyshev polynomials implementation
+    # def __init__(self, hr_dim):
+    def __init__(self, hr_dim, k):
         super(GSRLayer, self).__init__()
 
+        ########################## CB poly imp.
+        self.k = k
+        #######################################
         self.weights = torch.from_numpy(
             weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
         self.weights = torch.nn.Parameter(
             data=self.weights, requires_grad=True)
+
+    ################## CB. Poly Implementation
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.weights)
+    ############################################
 
     def forward(self, A, X):
         with torch.autograd.set_detect_anomaly(True):
@@ -24,26 +34,53 @@ class GSRLayer(nn.Module):
             lr_dim = lr.shape[0]
             f = X
 
-            ############# fixed code - changed symeig function
-            eig_val_lr, U_lr = torch.linalg.eigh(lr, UPLO='U')
-            ###############################
+        ########################## CB. Poly Implementation
+            # ############# fixed code - changed symeig function
+            # eig_val_lr, U_lr = torch.linalg.eigh(lr, UPLO='U')
+            # ###############################
 
-            # U_lr = torch.abs(U_lr)
-            eye_mat = torch.eye(lr_dim).type(torch.FloatTensor)
-            s_d = torch.cat((eye_mat, eye_mat), 0)
+            # # U_lr = torch.abs(U_lr)
+            # eye_mat = torch.eye(lr_dim).type(torch.FloatTensor)
+            # s_d = torch.cat((eye_mat, eye_mat), 0)
 
-            a = torch.matmul(self.weights, s_d)
-            b = torch.matmul(a, torch.t(U_lr))
-            f_d = torch.matmul(b, f)
+            # a = torch.matmul(self.weights, s_d)
+            # b = torch.matmul(a, torch.t(U_lr))
+            # f_d = torch.matmul(b, f)
+            # f_d = torch.abs(f_d)
+            # f_d = f_d.fill_diagonal_(1)
+            # adj = f_d
+
+            # X = torch.mm(adj, adj.t())
+            # X = (X + X.t())/2
+            # X = X.fill_diagonal_(1)
+
+            # Compute the normalized Laplacian matrix
+            D = torch.sum(lr, dim=1)
+            D_inv_sqrt = torch.pow(D, -0.5)
+            D_inv_sqrt[torch.isinf(D_inv_sqrt)] = 0.
+            D_inv_sqrt = torch.diag(D_inv_sqrt)
+            L = torch.eye(lr_dim) - torch.mm(D_inv_sqrt, lr).mm(D_inv_sqrt)
+            # Compute Chebyshev polynomials
+            T_k = [torch.eye(lr_dim), L]
+            for k in range(2, self.k):
+                T_k.append(2 * torch.mm(L, T_k[-1]) - T_k[-2])
+
+            # Approximate the eigenvalue vector using Chebyshev polynomials
+            eig_approx = torch.zeros(lr_dim)
+            for k in range(self.k):
+                eig_approx += self.weights[k] * T_k[k].diag()
+
+            # Perform the graph super-resolution operation
+            f_d = torch.mm(f, torch.diag(eig_approx))
             f_d = torch.abs(f_d)
             f_d = f_d.fill_diagonal_(1)
             adj = f_d
 
             X = torch.mm(adj, adj.t())
-            X = (X + X.t())/2
+            X = (X + X.t()) / 2
             X = X.fill_diagonal_(1)
-        return adj, torch.abs(X)
 
+        return adj, torch.abs(X)
 
 # class GraphConvolution(nn.Module):
 #     """
