@@ -79,9 +79,14 @@ def load_data(start_value, end_value):
 
 
 def data():
-    subjects_adj, subjects_labels = load_data(25629, 25830)
-    test_adj_1, test_labels_1 = load_data(25831, 25863)
-    test_adj_2, test_labels_2 = load_data(30701, 30757)
+    # subjects_adj, subjects_labels = load_data(25629, 25830)
+    # test_adj_1, test_labels_1 = load_data(25831, 25863)
+    # test_adj_2, test_labels_2 = load_data(30701, 30757)
+    ############## adjust train and test data size - reduced by half
+    subjects_adj, subjects_labels = load_data(25629, 25730)
+    test_adj_1, test_labels_1 = load_data(25831, 25847)
+    test_adj_2, test_labels_2 = load_data(30701, 30729)
+    #############################################
     test_adj = np.concatenate((test_adj_1, test_adj_2), axis=0)
     test_labels = np.concatenate((test_labels_1, test_labels_2), axis=0)
     return subjects_adj, subjects_labels, test_adj, test_labels
