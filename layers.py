@@ -45,6 +45,7 @@ class GSRLayer(nn.Module):
             T_k = self.chebyshev_polynomials(lr, self.k)
 
             s_d = torch.cat((torch.eye(lr_dim), torch.eye(lr_dim)), 0)
+            s_d = s_d[:self.weights.shape[1], :]  # Adjust the dimensions of s_d
 
             a = torch.matmul(self.weights, s_d)
             f_d = torch.zeros_like(f)
@@ -56,7 +57,7 @@ class GSRLayer(nn.Module):
                 print(T_k[i].shape)
                 print(f.shape)
                 ##########################
-                f_d += torch.matmul(a.t(), torch.matmul(T_k[i], f))
+                f_d += torch.matmul(a, torch.matmul(T_k[i], f.t()))
             f_d = torch.abs(f_d)
             f_d = f_d.fill_diagonal_(1)
             adj = f_d
