@@ -122,18 +122,20 @@ def test(model, test_adj, test_labels, args):
             # i += 1
 
     print("Test error MSE: ", np.mean(test_error))
-    # preds_list = [val for sublist in preds_list for val in sublist]
-    # g_t_list = [val for sublist in g_t for val in sublist]
-    # binwidth = 0.01
-    # bins = np.arange(0, 1 + binwidth, binwidth)
-    # plt.hist(preds_list, bins=bins, range=(0, 1),
-    #         alpha=0.5, rwidth=0.9, label='predictions')
-    # plt.hist(g_t_list, bins=bins, range=(0, 1),
-    #         alpha=0.5, rwidth=0.9, label='ground truth')
-    # plt.xlim(xmin=0, xmax=1)
-    # plt.legend(loc='upper right')
-    # plt.title('GSR-UNet with self reconstruction: Histogram')
-    # plt.show(block=False)
-    # plt.plot(all_epochs_loss)
-    # plt.title('GSR-UNet with self reconstruction: Loss')
-    # plt.show()
+    ################## uncommented  visualisation code
+    preds_list = [val for sublist in preds_list for val in sublist]
+    g_t_list = [val for sublist in g_t for val in sublist]
+    binwidth = 0.01
+    bins = np.arange(0, 1 + binwidth, binwidth)
+    plt.hist(preds_list, bins=bins, range=(0, 1),
+            alpha=0.5, rwidth=0.9, label='predictions')
+    plt.hist(g_t_list, bins=bins, range=(0, 1),
+            alpha=0.5, rwidth=0.9, label='ground truth')
+    plt.xlim(xmin=0, xmax=1)
+    plt.legend(loc='upper right')
+    plt.title('GSR-UNet with self reconstruction: Histogram')
+    plt.show(block=False)
+    plt.plot(all_epochs_loss)
+    plt.title('GSR-UNet with self reconstruction: Loss')
+    plt.show()
+    ##################################################
