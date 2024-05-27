@@ -119,59 +119,133 @@ class GraphUnet(nn.Module):
         super(GraphUnet, self).__init__()
         self.ks = ks
 
-        self.start_gcn = GCN(in_dim, dim)
-        self.bottom_gcn = GCN(dim, dim)
-        self.end_gcn = GCN(2*dim, out_dim)
-        self.down_gcns = []
-        self.up_gcns = []
+        ######################## GAT Layer for pooling/unpooling
+        # self.start_gcn = GCN(in_dim, dim)
+        # self.bottom_gcn = GCN(dim, dim)
+        # self.end_gcn = GCN(2*dim, out_dim)
+        # self.down_gcns = []
+        # self.up_gcns = []
+        self.start_gat = GraphAttentionLayer(in_dim, dim, dropout=0.6, alpha=0.2, concat=True)
+        self.bottom_gat = GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True)
+        self.end_gat = GraphAttentionLayer(2*dim, out_dim, dropout=0.6, alpha=0.2, concat=False)
+        self.down_gats = []
+        self.up_gats = []
+        ###########################################################
+        
         self.pools = []
         self.unpools = []
         self.l_n = len(ks)
         for i in range(self.l_n):
-            self.down_gcns.append(GCN(dim, dim))
-            self.up_gcns.append(GCN(dim, dim))
-            self.pools.append(GraphAttentionPool(ks[i], dim))  # Use GraphAttentionPool instead of GraphPool
-            self.unpools.append(GraphAttentionUnpool())  # Use GraphAttentionUnpool instead of GraphUnpool
+            ###################################### GAT Lyer for pooling/unpooling
+            # self.down_gcns.append(GCN(dim, dim))
+            # self.up_gcns.append(GCN(dim, dim))
+            # self.pools.append(GraphAttentionPool(ks[i], dim))  # Use GraphAttentionPool instead of GraphPool
+            # self.unpools.append(GraphAttentionUnpool())  # Use GraphAttentionUnpool instead of GraphUnpool
+            self.down_gats.append(GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True))
+            self.up_gats.append(GraphAttentionLayer(dim, dim, dropout=0.6, alpha=0.2, concat=True))
+            self.pools.append(GraphAttentionPool(ks[i], dim))
+            self.unpools.append(GraphAttentionUnpool())
+            ######################################################################
 
     def forward(self, A, X):
         adj_ms = []
         indices_list = []
         down_outs = []
-        X = self.start_gcn(A, X)
-        start_gcn_outs = X
+        
+        # X = self.start_gcn(A, X)
+        # start_gcn_outs = X
+        X = self.start_gat(X, A)
+        start_gat_outs = X
+
         org_X = X
         for i in range(self.l_n):
-            X = self.down_gcns[i](A, X)
+            X = self.down_gats[i](X, A)
             adj_ms.append(A)
             down_outs.append(X)
             A, X, idx = self.pools[i](A, X)
             indices_list.append(idx)
-        X = self.bottom_gcn(A, X)
+        X = self.bottom_gat(X, A)
+        # for i in range(self.l_n):
+        #     X = self.down_gcns[i](A, X)
+        #     adj_ms.append(A)
+        #     down_outs.append(X)
+        #     A, X, idx = self.pools[i](A, X)
+        #     indices_list.append(idx)
+        # X = self.bottom_gcn(A, X)
+        
         for i in range(self.l_n):
             up_idx = self.l_n - i - 1
 
             A, idx = adj_ms[up_idx], indices_list[up_idx]
             A, X = self.unpools[i](A, X, idx)
-            X = self.up_gcns[i](A, X)
+            
+            # X = self.up_gcns[i](A, X)
+            X = self.up_gats[i](X, A)
+            
             X = X.add(down_outs[up_idx])
         X = torch.cat([X, org_X], 1)
-        X = self.end_gcn(A, X)
 
-        return X, start_gcn_outs
+        # X = self.end_gcn(A, X)
+        X = self.end_gat(X, A)
+
+        return X, start_gat_outs
+        # return X, start_gcn_outs
         
 ##########################################################################
 
-class GCN(nn.Module):
+########################## GAT Layrs for Pooling/Unpooling ###############
+# class GCN(nn.Module):
 
-    def __init__(self, in_dim, out_dim):
-        super(GCN, self).__init__()
-        self.proj = nn.Linear(in_dim, out_dim)
-        self.drop = nn.Dropout(p=0)
+#     def __init__(self, in_dim, out_dim):
+#         super(GCN, self).__init__()
+#         self.proj = nn.Linear(in_dim, out_dim)
+#         self.drop = nn.Dropout(p=0)
 
-    def forward(self, A, X):
+#     def forward(self, A, X):
 
-        X = self.drop(X)
-        X = torch.matmul(A, X)
-        X = self.proj(X)
-        return X
- 
+#         X = self.drop(X)
+#         X = torch.matmul(A, X)
+#         X = self.proj(X)
+#         return X
+
+class GraphAttentionLayer(nn.Module):
+    def __init__(self, in_features, out_features, dropout, alpha, concat=True):
+        super(GraphAttentionLayer, self).__init__()
+        self.dropout = dropout
+        self.in_features = in_features
+        self.out_features = out_features
+        self.alpha = alpha
+        self.concat = concat
+
+        self.W = nn.Parameter(torch.empty(size=(in_features, out_features)))
+        nn.init.xavier_uniform_(self.W.data, gain=1.414)
+        self.a = nn.Parameter(torch.empty(size=(2*out_features, 1)))
+        nn.init.xavier_uniform_(self.a.data, gain=1.414)
+
+        self.leakyrelu = nn.LeakyReLU(self.alpha)
+
+    def forward(self, h, adj):
+        Wh = torch.mm(h, self.W)
+        e = self._prepare_attentional_mechanism_input(Wh)
+
+        zero_vec = -9e15*torch.ones_like(e)
+        attention = torch.where(adj > 0, e, zero_vec)
+        attention = F.softmax(attention, dim=1)
+        attention = F.dropout(attention, self.dropout, training=self.training)
+        h_prime = torch.matmul(attention, Wh)
+
+        if self.concat:
+            return F.elu(h_prime)
+        else:
+            return h_prime
+
+    def _prepare_attentional_mechanism_input(self, Wh):
+        Wh1 = torch.matmul(Wh, self.a[:self.out_features, :])
+        Wh2 = torch.matmul(Wh, self.a[self.out_features:, :])
+        e = Wh1 + Wh2.T
+        return self.leakyrelu(e)
+
+    def __repr__(self):
+        return self.__class__.__name__ + ' (' + str(self.in_features) + ' -> ' + str(self.out_features) + ')'
+
+
