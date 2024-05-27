@@ -95,17 +95,17 @@ class GraphUnet(nn.Module):
         X = torch.cat([X, centrality_features], dim=-1)
         ######################################################
         
-        X = self.start_gat(X, A)
+        X = self.start_gat(X, A, centrality_features)          ######### pass centrality measure
         start_gat_outs = X
 
         org_X = X
         for i in range(self.l_n):
-            X = self.down_gats[i](X, A)
+            X = self.down_gats[i](X, A, centrality_features)   # Pass centrality measure
             adj_ms.append(A)
             down_outs.append(X)
             A, X, idx = self.pools[i](A, X)
             indices_list.append(idx)
-        X = self.bottom_gat(X, A)
+        X = self.bottom_gat(X, A, centrality_features)       # Pass centrality measure
         
         for i in range(self.l_n):
             up_idx = self.l_n - i - 1
@@ -113,12 +113,12 @@ class GraphUnet(nn.Module):
             A, idx = adj_ms[up_idx], indices_list[up_idx]
             A, X = self.unpools[i](A, X, idx)
             
-            X = self.up_gats[i](X, A)
+            X = self.up_gats[i](X, A, centrality_features)        # Pass centrality measure
             
             X = X.add(down_outs[up_idx])
         X = torch.cat([X, org_X], 1)
 
-        X = self.end_gat(X, A)
+        X = self.end_gat(X, A, centrality_features)           # Pass centrality measure
 
         return X, start_gat_outs
         
@@ -133,14 +133,17 @@ class GraphAttentionLayer(nn.Module):
         self.alpha = alpha
         self.concat = concat
 
-        self.W = nn.Parameter(torch.empty(size=(in_features, out_features)))
+        self.W = nn.Parameter(torch.empty(size=(in_features+1, out_features)))
         nn.init.xavier_uniform_(self.W.data, gain=1.414)
         self.a = nn.Parameter(torch.empty(size=(2*out_features, 1)))
         nn.init.xavier_uniform_(self.a.data, gain=1.414)
 
         self.leakyrelu = nn.LeakyReLU(self.alpha)
 
-    def forward(self, h, adj):
+    def forward(self, h, adj, centrality):
+        #################### edge cent.
+        h = torch.cat([h, centrality], dim=1) 
+        ###############################
         Wh = torch.mm(h, self.W)
         e = self._prepare_attentional_mechanism_input(Wh)
 
