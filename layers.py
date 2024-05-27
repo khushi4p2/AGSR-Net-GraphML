@@ -71,7 +71,7 @@ class GSRLayer(nn.Module):
             # Approximate the eigenvalue vector using Chebyshev polynomials
             eig_approx = torch.zeros(lr_dim, lr_dim)
             for k in range(self.k):
-                eig_approx += torch.mm(self.weights[k], T_k[k])
+                eig_approx += torch.mm(self.weights[k][:lr_dim, :lr_dim], T_k[k])
 
             # Perform the graph super-resolution operation
             f_d = torch.mm(f, eig_approx)
