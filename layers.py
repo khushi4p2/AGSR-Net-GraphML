@@ -16,7 +16,7 @@ class GSRLayer(nn.Module):
 
         ########################## CB poly imp.
         self.k = k
-        self.weights = nn.Parameter(torch.Tensor(k, hr_dim))
+        self.weights = nn.Parameter(torch.Tensor(k, hr_dim, hr_dim))
         self.reset_parameters()
         #######################################
         # self.weights = torch.from_numpy(
@@ -69,12 +69,12 @@ class GSRLayer(nn.Module):
                 T_k.append(2 * torch.mm(L, T_k[-1]) - T_k[-2])
 
             # Approximate the eigenvalue vector using Chebyshev polynomials
-            eig_approx = torch.zeros(lr_dim)
+            eig_approx = torch.zeros(lr_dim, lr_dim)
             for k in range(self.k):
-                eig_approx += self.weights[k] * T_k[k].diag()
+                eig_approx += torch.mm(self.weights[k], T_k[k])
 
             # Perform the graph super-resolution operation
-            f_d = torch.mm(f, torch.diag(eig_approx))
+            f_d = torch.mm(f, eig_approx)
             f_d = torch.abs(f_d)
             f_d = f_d.fill_diagonal_(1)
             adj = f_d
