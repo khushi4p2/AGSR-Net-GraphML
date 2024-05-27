@@ -83,11 +83,11 @@ class GraphUnet(nn.Module):
 
         ################################# edge centrality 
         if self.centrality_type == 'degree':
-            centrality = compute_degree_centrality(A)
+            centrality = calc_degree_centrality(A)
         elif self.centrality_type == 'eigenvector':
-            centrality = compute_eigenvector_centrality(A)
+            centrality = calc_eigenvector_centrality(A)
         elif self.centrality_type == 'betweenness':
-            centrality = compute_betweenness_centrality(A)
+            centrality = calc_betweenness_centrality(A)
         else:
             raise ValueError(f"Invalid centrality type: {self.centrality_type}")
         
