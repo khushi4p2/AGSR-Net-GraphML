@@ -17,7 +17,7 @@ class GSRLayer(nn.Module):
         ########################## CB poly imp.
         self.k = k
         self.weights = torch.from_numpy(
-            weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
+            weight_variable_glorot((hr_dim, hr_dim))).type(torch.FloatTensor)
         self.weights = torch.nn.Parameter(
             data=self.weights, requires_grad=True)
         #######################################
