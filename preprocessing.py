@@ -3,6 +3,10 @@ import numpy as np
 import os
 import scipy.io
 
+################## edge centrality 
+import networkx as nx
+##################################
+
 path = 'drive/BRAIN_DATASET'
 roi_str = 'ROI_FC.mat'
 
@@ -32,6 +36,23 @@ def unpad(data, split):
     train = data[split:idx_0, split:idx_1]
     return train
 
+################################## edge centrality measures #################
+def degree_centrality(A):
+    G = nx.from_numpy_array(A.numpy())
+    centrality = nx.degree_centrality(G)
+    return torch.tensor(list(centrality.values()))
+
+def eigenvector_centrality(A, max_iter=100, tol=1e-6):
+    G = nx.from_numpy_array(A.numpy())
+    centrality = nx.eigenvector_centrality(G, max_iter=max_iter, tol=tol)
+    return torch.tensor(list(centrality.values()))
+
+def betweenness_centrality(A):
+    G = nx.from_numpy_array(A.numpy())
+    centrality = nx.edge_betweenness_centrality(G)
+    return torch.tensor(list(centrality.values()))
+
+##################################################################################
 
 def extract_data(subject, session_str, parcellation_str, subjects_roi):
     folder_path = os.path.join(
