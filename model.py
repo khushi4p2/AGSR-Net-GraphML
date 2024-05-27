@@ -14,7 +14,7 @@ class AGSRNet(nn.Module):
         self.lr_dim = args.lr_dim
         self.hr_dim = args.hr_dim
         self.hidden_dim = args.hidden_dim
-        self.layer = GSRLayer(self.hr_dim)
+        self.layer = GSRLayer(self.hr_dim, k=5) ########## provided the "k=5" for chebyshev poly.
         self.net = GraphUnet(ks, self.lr_dim, self.hr_dim)
         # self.gc1 = GraphConvolution(
         #     self.hr_dim, self.hidden_dim, 0, act=F.relu)
