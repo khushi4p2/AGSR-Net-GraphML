@@ -16,11 +16,13 @@ class GSRLayer(nn.Module):
 
         ########################## CB poly imp.
         self.k = k
+        self.weights = nn.Parameter(torch.Tensor(k, hr_dim))
+        self.reset_parameters()
         #######################################
-        self.weights = torch.from_numpy(
-            weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
-        self.weights = torch.nn.Parameter(
-            data=self.weights, requires_grad=True)
+        # self.weights = torch.from_numpy(
+        #     weight_variable_glorot(hr_dim)).type(torch.FloatTensor)
+        # self.weights = torch.nn.Parameter(
+        #     data=self.weights, requires_grad=True)
 
     ################## CB. Poly Implementation
     def reset_parameters(self):
@@ -60,6 +62,7 @@ class GSRLayer(nn.Module):
             D_inv_sqrt[torch.isinf(D_inv_sqrt)] = 0.
             D_inv_sqrt = torch.diag(D_inv_sqrt)
             L = torch.eye(lr_dim) - torch.mm(D_inv_sqrt, lr).mm(D_inv_sqrt)
+            
             # Compute Chebyshev polynomials
             T_k = [torch.eye(lr_dim), L]
             for k in range(2, self.k):
