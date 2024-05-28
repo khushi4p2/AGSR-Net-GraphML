@@ -38,7 +38,7 @@ class GraphAttentionPool(nn.Module):
         return A, new_X, idx
 
 class GraphUnet(nn.Module):
-    def __init__(self, ks, in_dim, out_dim, centrality_type = 'degree', dim=320):
+    def __init__(self, ks, in_dim, out_dim, dim=320):
         super(GraphUnet, self).__init__()
         self.ks = ks
 
