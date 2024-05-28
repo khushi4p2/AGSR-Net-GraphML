@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from preprocessing import calc_degree_centrality, calc_eigenvector_centrality, calc_betweenness_centrality
+from preprocessing import calc_degree_centrality
 
 
 ################## Attention Unpooling and Pooling ##################
@@ -42,9 +42,9 @@ class GraphUnet(nn.Module):
         super(GraphUnet, self).__init__()
         self.ks = ks
 
-        ############################# edge centrality
-        self.centrality_type = centrality_type
-        #########################################
+        # ############################# edge centrality
+        # self.centrality_type = centrality_type
+        # #########################################
 
         ######################## GAT Layer for pooling/unpooling
         ########################### edge centrality meaures ###############
@@ -82,18 +82,18 @@ class GraphUnet(nn.Module):
         down_outs = []
 
         ################################# edge centrality 
-        if self.centrality_type == 'degree':
-            centrality = calc_degree_centrality(A)
-        elif self.centrality_type == 'eigenvector':
-            centrality = calc_eigenvector_centrality(A)
-        elif self.centrality_type == 'betweenness':
-            centrality = calc_betweenness_centrality(A)
-        else:
-            raise ValueError(f"Invalid centrality type: {self.centrality_type}")
-        
-        centrality_features = centrality.unsqueeze(-1)
-        centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
-        X_with_centrality = torch.cat([X, centrality_features], dim=-1)
+        # if self.centrality_type == 'degree':
+        #     centrality = calc_degree_centrality(A)
+        # elif self.centrality_type == 'eigenvector':
+        #     centrality = calc_eigenvector_centrality(A)
+        # elif self.centrality_type == 'betweenness':
+        #     centrality = calc_betweenness_centrality(A)
+        # else:
+        #     raise ValueError(f"Invalid centrality type: {self.centrality_type}")
+
+        degree_centrality = calc_degree_centrality(A).unsqueeze(-1)
+        # centrality_features = centrality_features.expand(-1, X.size(1))  # Adjust the size of centrality_features
+        X_with_centrality = torch.cat([X, degree_centrality], dim=-1)
         ######################################################
         
         # X = self.start_gat(X, A, centrality_features)          ######### pass centrality measure
