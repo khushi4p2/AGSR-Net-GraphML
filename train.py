@@ -14,11 +14,10 @@ def train(model, subjects_adj, subjects_labels, args):
     ################# code optimization##################
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = model.to(device)
-    netD = Discriminator(args).to(device)  # Ensure Discriminator is also on GPU
+    netD = Discriminator(args).to(device)  #  Discriminator on GPU
     #####################################################
 
     bce_loss = nn.BCELoss()
-    # netD = Discriminator(args)
     print(netD)
     optimizerG = optim.Adam(model.parameters(), lr=args.lr)
     optimizerD = optim.Adam(netD.parameters(), lr=args.lr)
@@ -32,19 +31,15 @@ def train(model, subjects_adj, subjects_labels, args):
                 optimizerD.zero_grad()
                 optimizerG.zero_grad()
 
-                # hr = pad_HR_adj(hr, args.padding)
-                # lr = torch.from_numpy(lr).type(torch.FloatTensor)
-                # padded_hr = torch.from_numpy(hr).type(torch.FloatTensor)
-
-                ########## code optimization
-                hr = pad_HR_adj(hr, args.padding)  # Assume this returns a NumPy array
+                ########## code optimization for GPU
+                hr = pad_HR_adj(hr, args.padding)
                 lr = torch.from_numpy(lr).type(torch.FloatTensor).to(device)
                 padded_hr = torch.from_numpy(hr).type(torch.FloatTensor).to(device)
                 #############################
 
                 eig_val_hr, U_hr = torch.linalg.eigh(
                     padded_hr, UPLO='U')
-            ########### code opti. ###################
+            ########### code optimization ###################
                 U_hr = U_hr.to(device)  # Transfer eigenvectors to GPU
             ###########################################
 
@@ -89,8 +84,6 @@ def test(model, test_adj, test_labels, args):
     test_error = []
     preds_list = []
 
-    # i = 0
-
     for lr, hr in zip(test_adj, test_labels):
         all_zeros_lr = not np.any(lr)
         all_zeros_hr = not np.any(hr)
@@ -101,41 +94,11 @@ def test(model, test_adj, test_labels, args):
             hr = torch.from_numpy(hr).type(torch.FloatTensor)
             preds, a, b, c = model(lr, args.lr_dim, args.hr_dim)
 
-            # if i == 0:
-            #     print("Hr", hr)
-            #     print("Preds  ", preds)
-            #     plt.imshow(hr, origin='lower',  extent=[
-            #         0, 10000, 0, 10], aspect=1000)
-            #     plt.show(block=False)
-            #     plt.imshow(preds.detach(), origin='lower',
-            #                extent=[0, 10000, 0, 10], aspect=1000)
-            #     plt.show(block=False)
-            #     plt.imshow(hr - preds.detach(), origin='lower',
-            #                extent=[0, 10000, 0, 10], aspect=1000)
-            #     plt.show(block=False)
-
             preds_list.append(preds.flatten().detach().numpy())
             error = criterion(preds, hr)
             g_t.append(hr.flatten())
             print(error.item())
             test_error.append(error.item())
-            # i += 1
 
     print("Test error MSE: ", np.mean(test_error))
-    ################## uncommented  visualisation code
-    preds_list = [val for sublist in preds_list for val in sublist]
-    g_t_list = [val for sublist in g_t for val in sublist]
-    binwidth = 0.01
-    bins = np.arange(0, 1 + binwidth, binwidth)
-    plt.hist(preds_list, bins=bins, range=(0, 1),
-            alpha=0.5, rwidth=0.9, label='predictions')
-    plt.hist(g_t_list, bins=bins, range=(0, 1),
-            alpha=0.5, rwidth=0.9, label='ground truth')
-    plt.xlim(xmin=0, xmax=1)
-    plt.legend(loc='upper right')
-    plt.title('GSR-UNet with self reconstruction: Histogram')
-    plt.show(block=False)
-    plt.plot(all_epochs_loss)
-    plt.title('GSR-UNet with self reconstruction: Loss')
-    plt.show()
-    ##################################################
+
