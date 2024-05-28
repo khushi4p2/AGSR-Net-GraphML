@@ -3,9 +3,8 @@ import numpy as np
 import os
 import scipy.io
 
-################## edge centrality 
+# for edge centrality 
 import networkx as nx
-##################################
 
 path = 'drive/BRAIN_DATASET'
 roi_str = 'ROI_FC.mat'
@@ -36,7 +35,6 @@ def unpad(data, split):
     train = data[split:idx_0, split:idx_1]
     return train
 
-################################## edge centrality measures #################
 # eigenvector centrality algo.
 def calc_eigenvector_centrality(adj_matrix, max_iter=100, tol=1e-6):
     n = adj_matrix.shape[0]
@@ -48,7 +46,6 @@ def calc_eigenvector_centrality(adj_matrix, max_iter=100, tol=1e-6):
             break
         x = x_new
     return x
-##################################################################################
 
 def extract_data(subject, session_str, parcellation_str, subjects_roi):
     folder_path = os.path.join(
@@ -96,14 +93,9 @@ def load_data(start_value, end_value):
 
 
 def data():
-    # subjects_adj, subjects_labels = load_data(25629, 25830)
-    # test_adj_1, test_labels_1 = load_data(25831, 25863)
-    # test_adj_2, test_labels_2 = load_data(30701, 30757)
-    ############## adjust train and test data size - reduced by half
-    subjects_adj, subjects_labels = load_data(25629, 25730)
-    test_adj_1, test_labels_1 = load_data(25831, 25847)
-    test_adj_2, test_labels_2 = load_data(30701, 30729)
-    #############################################
+    subjects_adj, subjects_labels = load_data(25629, 25830)
+    test_adj_1, test_labels_1 = load_data(25831, 25863)
+    test_adj_2, test_labels_2 = load_data(30701, 30757)
     test_adj = np.concatenate((test_adj_1, test_adj_2), axis=0)
     test_labels = np.concatenate((test_labels_1, test_labels_2), axis=0)
     return subjects_adj, subjects_labels, test_adj, test_labels
