@@ -42,9 +42,7 @@ import argparse
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='AGSR-Net')
-    # parser.add_argument('--epochs', type=int, default=200, metavar='no_epochs',
-    #                     help='number of episode to train ')
-    #################### code opti.
+    
     parser.add_argument('--epochs', type=int, default=125, metavar='no_epochs',
                         help='number of episode to train ')
     ######################################
