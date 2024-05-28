@@ -37,29 +37,33 @@ def unpad(data, split):
     return train
 
 ################################## edge centrality measures #################
-def calc_degree_centrality(A):
-    # G = nx.from_numpy_array(A.numpy())
-    # centrality = nx.degree_centrality(G)
-    # return torch.tensor(list(centrality.values()))
-    G = nx.from_numpy_array(A.cpu().numpy())
-    centrality = nx.degree_centrality(G)
-    return torch.tensor(list(centrality.values()), device=A.device)
+# simplest possible degree cent. implementation
+def calc_degree_centrality(adj_matrix):
+    return torch.sum(adj_matrix, dim=1)
+    
+# def calc_degree_centrality(A):
+#     # G = nx.from_numpy_array(A.numpy())
+#     # centrality = nx.degree_centrality(G)
+#     # return torch.tensor(list(centrality.values()))
+#     G = nx.from_numpy_array(A.cpu().numpy())
+#     centrality = nx.degree_centrality(G)
+#     return torch.tensor(list(centrality.values()), device=A.device)
 
-def calc_eigenvector_centrality(A, max_iter=100, tol=1e-6):
-    # G = nx.from_numpy_array(A.numpy())
-    # centrality = nx.eigenvector_centrality(G, max_iter=max_iter, tol=tol)
-    # return torch.tensor(list(centrality.values()))
-    G = nx.from_numpy_array(A.cpu().numpy())
-    centrality = nx.eigenvector_centrality(G, max_iter=max_iter, tol=tol)
-    return torch.tensor(list(centrality.values()), device=A.device)
+# def calc_eigenvector_centrality(A, max_iter=100, tol=1e-6):
+#     # G = nx.from_numpy_array(A.numpy())
+#     # centrality = nx.eigenvector_centrality(G, max_iter=max_iter, tol=tol)
+#     # return torch.tensor(list(centrality.values()))
+#     G = nx.from_numpy_array(A.cpu().numpy())
+#     centrality = nx.eigenvector_centrality(G, max_iter=max_iter, tol=tol)
+#     return torch.tensor(list(centrality.values()), device=A.device)
 
-def calc_betweenness_centrality(A):
-    # G = nx.from_numpy_array(A.numpy())
-    # centrality = nx.edge_betweenness_centrality(G)
-    # return torch.tensor(list(centrality.values()))
-    G = nx.from_numpy_array(A.cpu().numpy())
-    centrality = nx.betweenness_centrality(G)
-    return torch.tensor(list(centrality.values()), device=A.device)
+# def calc_betweenness_centrality(A):
+#     # G = nx.from_numpy_array(A.numpy())
+#     # centrality = nx.edge_betweenness_centrality(G)
+#     # return torch.tensor(list(centrality.values()))
+#     G = nx.from_numpy_array(A.cpu().numpy())
+#     centrality = nx.betweenness_centrality(G)
+#     return torch.tensor(list(centrality.values()), device=A.device)
 
 ##################################################################################
 
