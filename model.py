@@ -14,20 +14,13 @@ class AGSRNet(nn.Module):
         self.lr_dim = args.lr_dim
         self.hr_dim = args.hr_dim
         self.hidden_dim = args.hidden_dim
-        self.layer = GSRLayer(self.hr_dim, k=5) ########## provided the "k=5" for chebyshev poly.
+        self.layer = GSRLayer(self.hr_dim)
         self.net = GraphUnet(ks, self.lr_dim, self.hr_dim)
         
         self.gc1 = GraphConvolution(
             self.hr_dim, self.hidden_dim, 0, act=F.relu)
         self.gc2 = GraphConvolution(
             self.hidden_dim, self.hr_dim, 0, act=F.relu)
-
-    # ############# Graph Attention Layer ###############
-    #     self.gc1 = GATLayer(
-    #          self.hr_dim, self.hidden_dim, 0)
-    #     self.gc2 = GATLayer(
-    #          self.hidden_dim, self.hr_dim, 0)
-    # ############# Graph Attention Layer ###############
 
     def forward(self, lr, lr_dim, hr_dim):
         with torch.autograd.set_detect_anomaly(True):
